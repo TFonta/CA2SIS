@@ -351,14 +351,14 @@ class SpatialTransformer(nn.Module):
     Then apply standard transformer action.
     Finally, reshape to image
     """
-    def __init__(self, opt, in_channels, n_heads, d_head,
-                 depth=1, dropout=0., context_dim=None, feat_height=None):
+    def __init__(self, in_channels, n_heads, d_head,
+                 depth=1, dropout=0., context_dim=None, feat_height=None, no_self_att = False):
         super().__init__()
         self.in_channels = in_channels
         inner_dim = n_heads * d_head
         self.norm = Normalize(in_channels)
 
-        self.no_self_att = opt.no_self_att
+        self.no_self_att = no_self_att
 
         self.proj_in = nn.Conv2d(in_channels,
                                  inner_dim,

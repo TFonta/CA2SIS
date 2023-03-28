@@ -20,35 +20,14 @@ class BaseOptions():
     def initialize(self, parser):
         parser.add_argument('--pose_txt_path', type=str, default='/media/fontanini/Discone/DOTTORATO/REPOSITORY/trunk/SEAN-maskSwap-master/datasets/CelebA-HQ/CelebAMask-HQ-pose-anno.txt', help='models are saved here')
         parser.add_argument('--use_poses', action='store_true', help='load poses numbers')
-        parser.add_argument('--input_styles', action='store_true', help='use styles as input in the decoder instead of mask codes')
-        parser.add_argument('--linear_enc', action='store_true', help='use smaller MLP as encoder for mask parts')
-        parser.add_argument('--sean_style_encoder', action='store_true', help='use super bad Sean style Encoder')
-        parser.add_argument('--use_T', action='store_true', help='use Transformer encoder')
-        parser.add_argument('--chann_out_21', action='store_true', help='output both rgb and mask')
-        parser.add_argument('--D_sw', action='store_true', help='train discriminator using swapped images')
-        parser.add_argument('--no_self_att', action='store_true', help='remove sel attention from cross att blocks')
-        parser.add_argument('--cross_att_all_layers', action='store_true', help='use cross attention in all the decoder layers')
         
-        parser.add_argument('--multi_scale_style_enc', action='store_true', help='use a multy scale style encoder')
-        parser.add_argument('--elegant_solution', action='store_true', help='concatenate along words')
-
-        parser.add_argument('--no_embedding', action='store_true', help='do not embed the mask')
-        
-        parser.add_argument('--no_self_last_layers', action='store_true', help='do not use self attention in the last two layers')
         parser.add_argument('--exclude_bg', action='store_true', help='remove gb from input mask')
-        parser.add_argument('--single_layer_mask_enc', action='store_true', help='use a single layer for encoding masks')
-        parser.add_argument('--generate_masks', action='store_true', help='generate masks using noise')
-
-        parser.add_argument('--use_noise', action='store_true', help='generate images using noise')
-
         parser.add_argument('--no_model_load', action='store_true', help='gdo not load model in any case')
 
         parser.add_argument('--style_enc_kernel', type=int, default=5, help='kernel of the first layer of style encoder')
         parser.add_argument('--style_enc_feat_dim', type=int, default=4, help='feature dimention of the style encoder')
 
         parser.add_argument('--style_dim', type=int, default=256, help='style dimention')
-
-        parser.add_argument('--SEAN', action='store_true', help='load original SEAN model')
 
         # experiment specifics
         parser.add_argument('--name', type=str, default='label2coco', help='name of the experiment. It decides where to store samples and models')

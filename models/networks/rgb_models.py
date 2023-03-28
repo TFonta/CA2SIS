@@ -74,26 +74,24 @@ class RGB_model(nn.Module):
         self.latent_variable_size = self.latent_variable_size*5
 
         self.res2 = res.ResBlock(ngf*16, dropout=0, out_channels=ngf*8, dims=2, up=False)
-        self.cross2 = att.SpatialTransformer(opt = opt, in_channels=ngf*8, n_heads=self.n_heads, d_head=self.d_head, depth=1,
-            context_dim=self.latent_variable_size,feat_height=16)
+        self.cross2 = att.SpatialTransformer(in_channels=ngf*8, n_heads=self.n_heads, d_head=self.d_head, depth=1,
+            context_dim=self.latent_variable_size,feat_height=16, no_self_att=False)
         
         self.res3 = res.ResBlock(ngf*8, dropout=0, out_channels=ngf*4, dims=2, up=True)
-        self.cross3 = att.SpatialTransformer(opt = opt, in_channels=ngf*4, n_heads=self.n_heads, d_head=self.d_head,depth=1,
-            context_dim=self.latent_variable_size,feat_height=32)
+        self.cross3 = att.SpatialTransformer(in_channels=ngf*4, n_heads=self.n_heads, d_head=self.d_head,depth=1,
+            context_dim=self.latent_variable_size,feat_height=32, no_self_att=False)
         
         self.res4 = res.ResBlock(ngf*4, dropout=0, out_channels=ngf*2, dims=2, up=True)
-        self.cross4 = att.SpatialTransformer(opt = opt, in_channels=ngf*2, n_heads=self.n_heads, d_head=self.d_head,depth=1,
-            context_dim=self.latent_variable_size,feat_height=64)
+        self.cross4 = att.SpatialTransformer(in_channels=ngf*2, n_heads=self.n_heads, d_head=self.d_head,depth=1,
+            context_dim=self.latent_variable_size,feat_height=64, no_self_att=False)
         
         # from here no self attention
-        opt.no_self_att = True
-
         self.res5 = res.ResBlock(ngf*2, dropout=0, out_channels=ngf, dims=2, up=True)       
         self.cross5 = att.SpatialTransformer(opt = opt, in_channels=ngf, n_heads=self.n_heads, d_head=self.d_head,depth=1,
-            context_dim=self.latent_variable_size,feat_height=128)        
+            context_dim=self.latent_variable_size,feat_height=128,no_self_att = True)        
         self.res6 = res.ResBlock(ngf, dropout=0, out_channels=ngf, dims=2, up=True)
         self.cross6 = att.SpatialTransformer(opt = opt, in_channels=ngf, n_heads=4, d_head=32,depth=1,
-            context_dim=self.latent_variable_size,feat_height=256)    
+            context_dim=self.latent_variable_size,feat_height=256,no_self_att = True)    
         self.out_conv = nn.Conv2d(ngf,3,1,1)
 
     def encode_mask_parts(self, x): #B,18,256,256 
