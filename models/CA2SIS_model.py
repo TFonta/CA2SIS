@@ -21,15 +21,6 @@ class CA2SISModel(torch.nn.Module):
     def __init__(self, opt):
         super().__init__()
         self.opt = opt
-        self.chann_out_21 = opt.chann_out_21
-        self.D_sw = opt.D_sw
-        self.use_noise = opt.use_noise
-        self.generate_masks = opt.generate_masks
-        self.multi_scale = opt.multi_scale_style_enc
-        self.elegant_solution = opt.elegant_solution
-        self.exclude_bg = opt.exclude_bg
-        self.no_embedding = opt.no_embedding
-
         self.FloatTensor = torch.cuda.FloatTensor if self.use_gpu() \
             else torch.FloatTensor
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
@@ -44,14 +35,9 @@ class CA2SISModel(torch.nn.Module):
             self.criterionFeat = torch.nn.L1Loss()
             if not opt.no_vgg_loss:
                 self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
-            if self.chann_out_21:
-                self.CE_loss = nn.CrossEntropyLoss()
 
         self.gen_parts = [1, 2, 4, 5, 6, 7, 10, 11, 12, 13]
         self.part2swap = 1
-
-        self.alternate_D_sw = True
-
 
     # Entry point for all calls involving forward pass
     # of deep networks. We used this approach since DataParallel module
@@ -88,28 +74,10 @@ class CA2SISModel(torch.nn.Module):
             with torch.no_grad():
                 fake_image = self.generate_styles(input_semantics, real_image, p)
                 return fake_image
-        elif mode == 'generate_with_noise':
-            with torch.no_grad():
-                fake_image = self.generate_with_noise(input_semantics)
-                return fake_image
-        elif mode == 'generate_with_mask':
-            with torch.no_grad():
-                fake_image = self.generate_with_mask(input_semantics, real_image)
-                return fake_image
         elif mode == 'parts_int':
             with torch.no_grad():
                 fake_image = self.generate_parts_interpolation(input_semantics, real_image, p)
                 return fake_image
-        # elif mode == 'UI_mode':
-        #     with torch.no_grad():
-        #         # fake_image, _ = self.generate_fake(input_semantics, real_image)
-
-        #         ################### some problems here
-        #         obj_dic = data['obj_dic']
-        #         # if isinstance(obj_dic, str):
-        #         #     obj_dic = [obj_dic]
-        #         fake_image = self.use_style_codes(input_semantics, real_image, obj_dic)
-        #     return fake_image
         else:
             raise ValueError("|mode| is invalid")
 
@@ -185,28 +153,12 @@ class CA2SISModel(torch.nn.Module):
         return input_semantics, data['image']
 
     def compute_generator_loss(self, input_semantics, real_image, data):
-        self.alternate_D_sw = not self.alternate_D_sw
-        
         G_losses = {}
 
-        if self.D_sw and self.alternate_D_sw:
-            p = random.choices(self.gen_parts, k=self.part2swap)
-            fake_out = self.generate_swapped(input_semantics, real_image, p)
-            fake_image = fake_out['fake']
-            fake_image_D = fake_out['fake_sw']
-        else:
-            fake_image = self.generate_fake(
-                input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
-            fake_image_D = fake_image.clone()
-                
-
-        if self.chann_out_21:
-            gen_mask = fake_image[:,3:].clone()
-            G_losses['Mask'] = self.CE_loss(self.add_background_channel(gen_mask), data['label'].squeeze())
-            
-            fake_image = fake_image[:,:3] # if the net outputs both rgb and mask the fake image is in the first 3 channels
-            if not (self.D_sw and self.alternate_D_sw):
-                fake_image_D = fake_image.clone()
+        fake_image = self.generate_fake(
+            input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
+        fake_image_D = fake_image.clone()
+    
 
         pred_fake, pred_real = self.discriminate(
             input_semantics, fake_image_D, real_image)
@@ -214,18 +166,6 @@ class CA2SISModel(torch.nn.Module):
         G_losses['GAN'] = self.criterionGAN(pred_fake, True,
                                             for_discriminator=False)
 
-        if self.use_noise:
-            fake_image_noise = self.generate_with_noise(input_semantics)
-            pred_fake, pred_real = self.discriminate(
-                input_semantics, fake_image_noise, real_image)
-            G_losses['GAN_z'] = self.criterionGAN(pred_fake, True,
-                                            for_discriminator=False)
-        if self.generate_masks:
-            fake_image_mask = self.generate_with_mask(input_semantics, real_image)
-            pred_fake, pred_real = self.discriminate_mask(
-                            fake_image_mask, real_image)
-            G_losses['GAN_z_mask'] = self.criterionGAN(pred_fake, True,
-                                            for_discriminator=False)
 
         if not self.opt.no_ganFeat_loss:
             num_D = len(pred_fake)
@@ -246,24 +186,12 @@ class CA2SISModel(torch.nn.Module):
         return G_losses, fake_image
 
     def compute_discriminator_loss(self, input_semantics, real_image):
-        self.alternate_D_sw = not self.alternate_D_sw
-
         D_losses = {}
         with torch.no_grad():
-            if self.D_sw and self.alternate_D_sw:
-                p = random.choices(self.gen_parts, k=self.part2swap)
-                fake_out = self.generate_swapped(input_semantics, real_image, p)
-                fake_image = fake_out['fake']
-                fake_image_D = fake_out['fake_sw']
 
-            else:
-                fake_image = self.generate_fake(input_semantics, real_image)
-                fake_image_D = fake_image.clone()
-            
-            if self.chann_out_21:
-                fake_image = fake_image[:,:3]
-                if not (self.D_sw and self.alternate_D_sw):
-                    fake_image_D = fake_image.clone()
+            fake_image = self.generate_fake(input_semantics, real_image)
+            fake_image_D = fake_image.clone()
+        
             
             fake_image_D = fake_image_D.detach()
             fake_image_D.requires_grad_()
@@ -276,18 +204,6 @@ class CA2SISModel(torch.nn.Module):
         D_losses['D_real'] = self.criterionGAN(pred_real, True,
                                                for_discriminator=True)
         
-        if self.use_noise:
-            fake_image_noise = self.generate_with_noise(input_semantics)
-            pred_fake, pred_real = self.discriminate(
-                input_semantics, fake_image_noise, real_image)
-            D_losses['GAN_Fake_z'] = self.criterionGAN(pred_fake, False,
-                                            for_discriminator=True)
-        if self.generate_masks:
-            fake_image_mask = self.generate_with_mask(input_semantics, real_image)
-            pred_fake, pred_real = self.discriminate_mask(
-                            fake_image_mask, real_image)
-            D_losses['GAN_fake_z_mask'] = self.criterionGAN(pred_fake, False,
-                                            for_discriminator=True)
 
         return D_losses
 
@@ -307,9 +223,6 @@ class CA2SISModel(torch.nn.Module):
     def save_style_codes(self, input_semantics, real_image, obj_dic):
 
         fake_image = self.netG(real_image, input_semantics, input_semantics)
-        
-        if self.chann_out_21:
-            fake_image = fake_image[:,:3]
         
         fake_out = {'real':real_image,
                     'fake':fake_image
@@ -404,61 +317,24 @@ class CA2SISModel(torch.nn.Module):
     def generate_styles(self, input_semantics, real_image, p, level = None):
         
         m = input_semantics
-        if self.exclude_bg:
+        if self.opt.exclude_bg:
             m_sw = input_semantics[:,1:]
         else:
             m_sw = input_semantics
         
-        if not self.no_embedding:
-            z = self.netG.encode(m_sw)
-        else:
-            z = nn.functional.interpolate(m_sw, size=(16, 16), mode='nearest') 
+        z = self.netG.encode(m_sw)
                     
         s_org = self.netG.style_encoder(real_image, m)
 
         s_swap = s_org.clone()
 
-        if self.multi_scale: #5xbsx19x256
-            first_half = s_org[:real_image.size(0)//2].clone()
-            second_half = s_org[real_image.size(0)//2:].clone()
-            s_swap[real_image.size(0)//2:] = first_half
-            s_swap[:real_image.size(0)//2] = second_half
+        first_half = s_org[:real_image.size(0)//2].clone()
+        second_half = s_org[real_image.size(0)//2:].clone()
+        s_swap[real_image.size(0)//2:] = first_half
+        s_swap[:real_image.size(0)//2] = second_half
 
-            if self.elegant_solution:
-                for part in p:
-                    s_org[:,part] = s_swap[:,part].clone()     
-                    s_org[:,part + 19] = s_swap[:,part + 19].clone()
-                    s_org[:,part + 2*19] = s_swap[:,part + 2*19].clone()
-                    s_org[:,part + 3*19] = s_swap[:,part + 3*19].clone()
-                    s_org[:,part + 4*19] = s_swap[:,part + 4*19].clone()   
-            else:
-                for part in p:
-                    s_org[:,part] = s_swap[:,part].clone()  
-
-            # first_half = s_org[:,:real_image.size(0)//2].clone()
-            # second_half = s_org[:,real_image.size(0)//2:].clone()
-
-            # s_swap[:,real_image.size(0)//2:] = first_half
-            # s_swap[:,:real_image.size(0)//2] = second_half  
-            # # swap only styles that are in p
-            # if level == None:
-            #     for part in p:
-            #         # s_org[:2,:,:] = s_org[4,:,:].clone()     
-            #         # s_org[:,:,part] = s_swap[4,:,part].clone()  
-            #         # s_org[3,:,part] = s_swap[3,:,part].clone()  
-            #         s_org[:,:,part] = s_swap[:,:,part].clone()   
-            # else:
-            #     for part in p:
-            #         s_org[level,:,part] = s_swap[level,:,part].clone()                    
-        else: #bsx19x256
-            first_half = s_org[:real_image.size(0)//2].clone()
-            second_half = s_org[real_image.size(0)//2:].clone()
-            s_swap[real_image.size(0)//2:] = first_half
-            s_swap[:real_image.size(0)//2] = second_half
-
-            # swap only styles that are in p
-            for part in p:
-                s_org[:,part] = s_swap[:,part].clone()
+        for part in p:
+            s_org[:,part] = s_swap[:,part].clone()  
             
         fake_image = self.netG.decode(z,s_org)
         
@@ -469,42 +345,18 @@ class CA2SISModel(torch.nn.Module):
                     'fake_sw': fake_image_sw}
 
         return fake_out
-    
-    def generate_with_noise(self, input_semantics):
-        
-        z = torch.randn(input_semantics.size(0), 16).to(input_semantics.device)
-        fake_image = self.netG.forward_noise(z, input_semantics)
-        return fake_image
-
-    def generate_with_mask(self, input_semantics, real_image):   
-
-        z = torch.randn(input_semantics.size(0), 16).to(input_semantics.device)
-        fake_image = self.netG.forward_mask(z, real_image, input_semantics)
-        return fake_image
 
     def add_background_channel(self, x):
         bg_mask = torch.sum(x, dim = 1) > 0
         bg_mask = 1. - bg_mask.unsqueeze(1).float()
         return torch.cat((bg_mask, x), dim = 1)
 
-    # def use_style_codes(self, input_semantics, real_image, obj_dic):
-
-    #     fake_image = self.netG(input_semantics, real_image, obj_dic=obj_dic)
-
-    #     return fake_image
-
-
 
     # Given fake and real image, return the prediction of discriminator
     # for each fake and real image.
 
     def discriminate(self, input_semantics, fake_image, real_image):
-
-        if self.D_sw and self.alternate_D_sw:
-            gen_semantics = self.add_background_channel(fake_image[:,3:])
-            fake_concat = torch.cat([gen_semantics, fake_image[:,:3]], dim=1)
-        else:
-            fake_concat = torch.cat([input_semantics, fake_image], dim=1)
+        fake_concat = torch.cat([input_semantics, fake_image], dim=1)
         real_concat = torch.cat([input_semantics, real_image], dim=1)
 
         # In Batch Normalization, the fake and real images are

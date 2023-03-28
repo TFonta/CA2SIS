@@ -48,10 +48,7 @@ dataloader = data.create_dataloader(opt)
 print("Data Loaded!!!", flush = True)
 
 # create trainer for our model
-if opt.SEAN:
-    trainer = Pix2PixTrainer(opt)
-else:
-    trainer = CA2SISTrainer(opt)
+trainer = CA2SISTrainer(opt)
 
 # create tool for counting iterations
 iter_counter = IterationCounter(opt, len(dataloader))

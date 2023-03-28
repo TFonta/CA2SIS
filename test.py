@@ -53,10 +53,7 @@ dataloader = data.create_dataloader(opt)
 print("Data Loaded!!!", flush = True)
 
 # create model
-if opt.SEAN:
-    model = Pix2PixModel(opt)
-else:
-    model = CA2SISModel(opt)
+model = CA2SISModel(opt)
 
 model.eval()
 
