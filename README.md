@@ -35,12 +35,17 @@ To run the pre-trained models, please download the related weights and put the f
 [[Ade20K (To be uploaded)](link)]
 [[CityScapes (To be uploaded)](link)]
 
-To test the pre-trained model run the following command:
+To test the pre-trained model run the following commands:
+
+```bash
+bash test_[dataset].sh
+```
+where `[dataset]` can either be `[celeba, ade20k, cityscapes]`.
 
 ```
 python ./test.py --name [model_name] --exclude_bg \
     --sample_dir [results_path] --checkpoints_dir [checkpoint_path] \
-    --batchSize 16 --crop_size [image_crop_size] --style_dim [stylecode_size] --load_size [image_size] --dataset_mode custom \
+    --batchSize 16 --crop_size [image_crop_size] --style_dim [stylecode_size] --load_size [image_size] --dataset_mode [dataset] \
     --label_dir_test [test_label_path] \
     --image_dir_test [test_images_path] \
      --label_nc [num_classes] --no_instance --nThreads 4 --gpu_ids 0
@@ -64,7 +69,12 @@ python ./test.py --name celeba_model --exclude_bg \
 
 We trained our model on a single NVIDIA A100 GPU (40GB). The memory occupancy for training is non-negligible, so we recommend using a small batch size if training on GPUs with reduced memory.  
 
-To train a new model, you need to specify the following options: TODO: list options
+To train a new model, similarly to the testing case, you can run the following commands:
+
+```bash
+bash train_[dataset].sh
+```
+where `[dataset]` can either be `[celeba, ade20k, cityscapes]`.
 
 ```
 python ./train.py --name celeba_model --exclude_bg \
