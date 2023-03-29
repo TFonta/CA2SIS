@@ -19,13 +19,13 @@ cd CA2SIS/
 Install other requirements by running
 
 ```bash
-     pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Datasets Preparation
-To run the pre-trained models and generate reconstructed images or train a new model, the user needs to download the CelebAMask-HQ dataset and put it inside a 'datasets' folder in the root directory.
+To run the pre-trained models and generate reconstructed images or train a new model, the user needs to download the datasets and put them inside a 'datasets' folder in the root directory. Please refer also to this [link](https://github.com/ZPdesu/SEAN) for detailed instructions. 
 
-Link to the CelebAMask-HQ dataset: https://drive.google.com/file/d/1TKhN9kDvJEcpbIarwsd1_fsTR2vGx6LC/view
+Link to the pre-processed CelebAMask-HQ dataset: https://drive.google.com/file/d/1TKhN9kDvJEcpbIarwsd1_fsTR2vGx6LC/view
 
 ### Generating Images Using Pre-trained Models
 
@@ -60,7 +60,6 @@ python ./test.py --name celeba_model --exclude_bg \
      --label_nc 19 --no_instance --nThreads 4 --gpu_ids 0
 ``` 
 
-
 ### Train New Models
 
 We trained our model on a single NVIDIA A100 GPU (40GB). The memory occupancy for training is non-negligible, so we recommend using a small batch size if training on GPUs with reduced memory.  
@@ -80,7 +79,6 @@ python ./train.py --name celeba_model --exclude_bg \
 
 ### License
 All rights reserved. Licensed under the [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode) (**Attribution-NonCommercial-ShareAlike 4.0 International**) The code is released for academic research use only.
-
 
 ### Citation
 If you use this code for your research, please cite our papers.
