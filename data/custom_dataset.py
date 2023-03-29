@@ -24,14 +24,14 @@ class CustomDataset(Pix2pixDataset):
         parser.set_defaults(label_nc=13)
         parser.set_defaults(contain_dontcare_label=False)
 
-        parser.add_argument('--label_dir', type=str, required=True,
+        parser.add_argument('--label_dir', type=str, required=False,
                             help='path to the directory that contains label images')
-        parser.add_argument('--image_dir', type=str, required=True,
+        parser.add_argument('--image_dir', type=str, required=False,
                             help='path to the directory that contains photo images')
 
-        parser.add_argument('--label_dir_test', type=str, required=True,
+        parser.add_argument('--label_dir_test', type=str, required=False,
                             help='path to the directory that contains label images')
-        parser.add_argument('--image_dir_test', type=str, required=True,
+        parser.add_argument('--image_dir_test', type=str, required=False,
                             help='path to the directory that contains photo images')
 
         parser.add_argument('--instance_dir', type=str, default='',
