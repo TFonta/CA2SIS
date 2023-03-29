@@ -10,10 +10,16 @@ Semantic Image Synthesis with Class-adaptive Cross-attention (CA2-SIS) enables h
 ### Installation
 Clone this repo:
 
-```
+```bash
 git clone git@github.com:TFonta/CA2SIS.git
 cd CA2SIS/
 
+```
+
+Install other requirements by running
+
+```bash
+     pip install -r requirements.txt
 ```
 
 ### Datasets Preparation
