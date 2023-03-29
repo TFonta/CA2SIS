@@ -8,6 +8,13 @@
 Semantic Image Synthesis with Class-adaptive Cross-attention (CA2-SIS) enables high reconstruction quality, style transfer from a reference image both at global (full) and class level, and automatic shape editing.
 
 ### Installation
+Clone this repo:
+
+```
+git clone git@github.com:TFonta/CA2SIS.git
+cd CA2SIS/
+
+```
 
 ### Datasets Preparation
 To run the pre-trained models and generate reconstructed images or train a new model, the user needs to download the CelebAMask-HQ dataset and put it inside a 'datasets' folder in the root directory.
