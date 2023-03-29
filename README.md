@@ -52,8 +52,7 @@ To train a new model, similarly to the testing case, you can run the following c
 bash train_[dataset].sh
 ```
 where `[dataset]` can either be `[celeba, ade20k, cityscapes]`.
-
-``` 
+ 
 
 ### License
 All rights reserved. Licensed under the [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode) (**Attribution-NonCommercial-ShareAlike 4.0 International**) The code is released for academic research use only.
