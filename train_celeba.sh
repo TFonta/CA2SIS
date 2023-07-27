@@ -1,4 +1,4 @@
-python ./train.py --name celeba_model --exclude_bg \
+python3 ./train.py --name celeba_model --exclude_bg \
      --sample_dir ./samples/train_celeba/ --checkpoints_dir ./checkpoints/train_celeba/ \
     --batchSize 16 --dataset_mode custom \
     --label_dir ./datasets/CelebA-HQ/train/labels \

@@ -36,7 +36,7 @@ class BaseOptions():
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
         parser.add_argument('--sample_dir', type=str, default='./samples', help='samples are saved here')
         parser.add_argument('--test_dir', type=str, default='./test', help='test samples are saved here')
-        parser.add_argument('--model', type=str, default='pix2pix', help='which model to use')
+        parser.add_argument('--model', type=str, default='CA2SIS', help='which model to use')
         parser.add_argument('--norm_G', type=str, default='spectralinstance', help='instance normalization or batch normalization')
         parser.add_argument('--norm_D', type=str, default='spectralinstance', help='instance normalization or batch normalization')
         parser.add_argument('--norm_E', type=str, default='spectralinstance', help='instance normalization or batch normalization')

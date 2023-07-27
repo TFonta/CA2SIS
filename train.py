@@ -8,7 +8,6 @@ from options.train_options import TrainOptions
 import data
 from util.iter_counter import IterationCounter
 from trainers.CA2SIS_trainer import CA2SISTrainer
-from trainers.pix2pix_trainer import Pix2PixTrainer
 from util import util
 import torchvision
 import numpy as np
