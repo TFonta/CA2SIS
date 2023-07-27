@@ -8,8 +8,8 @@ from utils import make_folder
 label_list = ['skin', 'nose', 'eye_g', 'l_eye', 'r_eye', 'l_brow', 'r_brow', 'l_ear', 'r_ear', 'mouth', 'u_lip',
               'l_lip', 'hair', 'hat', 'ear_r', 'neck_l', 'neck', 'cloth']
 
-folder_base = '/media/zhup/Data/CelebAMask-HQ/CelebAMaskHQ-mask-anno'
-folder_save = '/media/zhup/Data/CelebAMask-HQ/CelebAMaskHQ-mask'
+folder_base = './datasets/CelebAMask-HQ/CelebAMaskHQ-mask-anno'
+folder_save = './datasets/CelebAMask-HQ/CelebAMaskHQ-mask'
 img_num = 30000
 
 make_folder(folder_save)

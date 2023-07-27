@@ -48,8 +48,8 @@ def colorize(gray_image, cmap):
 
 
 
-folder_base = '/media/zhup/Data/CelebAMask-HQ/CelebAMaskHQ-mask'
-folder_save = '/media/zhup/Data/CelebAMask-HQ/CelebAMaskHQ-mask-vis'
+folder_base = './datasets/CelebAMask-HQ/CelebAMaskHQ-mask'
+folder_save = './datasets/CelebAMask-HQ/CelebAMaskHQ-mask-vis'
 img_num = 30000
 
 make_folder(folder_save)

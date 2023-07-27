@@ -18,7 +18,7 @@ class BaseOptions():
         self.initialized = False
 
     def initialize(self, parser):
-        parser.add_argument('--pose_txt_path', type=str, default='/media/fontanini/Discone/DOTTORATO/REPOSITORY/trunk/SEAN-maskSwap-master/datasets/CelebA-HQ/CelebAMask-HQ-pose-anno.txt', help='models are saved here')
+        parser.add_argument('--pose_txt_path', type=str, default='./datasets/CelebA-HQ/CelebAMask-HQ-pose-anno.txt', help='models are saved here')
         parser.add_argument('--use_poses', action='store_true', help='load poses numbers')
         
         parser.add_argument('--exclude_bg', action='store_true', help='remove gb from input mask')
