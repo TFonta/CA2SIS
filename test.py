@@ -7,7 +7,6 @@ import sys
 from options.test_options import TestOptions
 import data
 from models.CA2SIS_model import CA2SISModel
-from models.pix2pix_model import Pix2PixModel
 from util import util
 from torchvision import transforms
 import os
