@@ -33,14 +33,13 @@ To run the pre-trained models, please download the related weights and put the f
 
 [[CelebMask-HQ (To be uploaded)](link)]
 [[Ade20K (To be uploaded)](link)]
-[[CityScapes (To be uploaded)](link)]
 
 To test the pre-trained model run the following commands:
 
 ```bash
 bash test_[dataset].sh
 ```
-where `[dataset]` can either be `[celeba, ade20k, cityscapes]`.
+where `[dataset]` can either be `[celeba, ade20k]`.
 
 ### Train New Models
 
@@ -51,7 +50,7 @@ To train a new model, similarly to the testing case, you can run the following c
 ```bash
 bash train_[dataset].sh
 ```
-where `[dataset]` can either be `[celeba, ade20k, cityscapes]`.
+where `[dataset]` can either be `[celeba, ade20k]`.
  
 
 ### License
