@@ -26,7 +26,7 @@ class CA2SISModel(torch.nn.Module):
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
 
-        self.netG, self.netD, self.netE, self.netD_m = self.initialize_networks(opt)
+        self.netG, self.netD, self.netE = self.initialize_networks(opt)
         print("initialized models", flush = True)
         # set loss functions
         if opt.isTrain:
@@ -112,7 +112,6 @@ class CA2SISModel(torch.nn.Module):
         netD = networks.define_D(opt) if opt.isTrain else None
         netG = networks.define_G(opt)
         netE = networks.define_E(opt) if opt.use_vae else None
-        netD_m = networks.define_D_mask(opt) if opt.generate_masks and opt.isTrain else None
         
         if not opt.no_model_load:
             if not opt.isTrain or opt.continue_train:
@@ -120,7 +119,7 @@ class CA2SISModel(torch.nn.Module):
                 if opt.isTrain:
                     netD = util.load_network(netD, 'D', opt.which_epoch, opt)
 
-        return netG, netD, netE, netD_m
+        return netG, netD, netE
 
     # preprocess the input, such as moving the tensors to GPUs and
     # transforming the label map to one-hot encoding
@@ -366,15 +365,6 @@ class CA2SISModel(torch.nn.Module):
         fake_and_real = torch.cat([fake_concat, real_concat], dim=0)
 
         discriminator_out = self.netD(fake_and_real)
-
-        pred_fake, pred_real = self.divide_pred(discriminator_out)
-
-        return pred_fake, pred_real
-
-    def discriminate_mask(self, fake_image, real_image):
-        fake_and_real = torch.cat([fake_image, real_image], dim=0)
-
-        discriminator_out = self.netD_m(fake_and_real)
 
         pred_fake, pred_real = self.divide_pred(discriminator_out)
 
