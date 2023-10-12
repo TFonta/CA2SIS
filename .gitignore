@@ -1,0 +1,18 @@
+# Ignore checkpoints folders
+checkpoints/
+checkpoints_b/
+
+# Ignore datasets folder
+datasets/
+checkpoints/
+checkpoints_b/
+results/
+samples/
+
+# Ignore batch files
+*.bat
+*.sh
+*.bash
+
+# Ignore all python cache files
+**/__pycache__
