@@ -53,8 +53,8 @@ print("Data Loaded!!!", flush = True)
 
 # create model
 model = CA2SISModel(opt)
-
 model.eval()
+print("Model Loaded!!!", flush = True)
 
 
 # Creates three folders, one for reconstructions, one for swapped and one for style swaps

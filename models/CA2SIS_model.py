@@ -25,7 +25,7 @@ class CA2SISModel(torch.nn.Module):
             else torch.FloatTensor
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
-
+        
         self.netG, self.netD, self.netE = self.initialize_networks(opt)
         print("initialized models", flush = True)
         # set loss functions
@@ -109,6 +109,7 @@ class CA2SISModel(torch.nn.Module):
     ############################################################################
 
     def initialize_networks(self, opt):
+        
         netD = networks.define_D(opt) if opt.isTrain else None
         netG = networks.define_G(opt)
         netE = networks.define_E(opt) if opt.use_vae else None

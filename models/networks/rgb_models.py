@@ -32,9 +32,9 @@ class RGB_model(nn.Module):
     def __init__(self, opt, nc, ngf, ndf, latent_variable_size):
         super(RGB_model, self).__init__()
         #self.cuda = True
-        self.input_styles = opt.input_styles
-        self.linear_enc = opt.linear_enc
-        self.use_sean = opt.sean_style_encoder
+        #self.input_styles = opt.input_styles
+        #self.linear_enc = opt.linear_enc
+        #self.use_sean = opt.sean_style_encoder
         self.opt = opt
         
         self.parts_for_dec = nc
@@ -53,15 +53,14 @@ class RGB_model(nn.Module):
             self.linear_enc_size = 512
         else:
             self.linear_enc_size = 256
-
+        
         self.encs = SingleLinearMaskEncoder(self.linear_enc_size)
-
-
+        
         # style encoder        
         self.style_encoder = MultiScaleEffStyleEncoder(num_downsample=6, num_upsample=5, 
-                                                    num_feat = self.opt.sefd, num_mask_channels = self.nc, 
+                                                    num_feat = 4, num_mask_channels = self.nc, 
                                                     output_dim = self.latent_variable_size)
-
+        
         # decoder
         self.n_heads = 8
         self.d_head = 64
@@ -87,10 +86,10 @@ class RGB_model(nn.Module):
         
         # from here no self attention
         self.res5 = res.ResBlock(ngf*2, dropout=0, out_channels=ngf, dims=2, up=True)       
-        self.cross5 = att.SpatialTransformer(opt = opt, in_channels=ngf, n_heads=self.n_heads, d_head=self.d_head,depth=1,
+        self.cross5 = att.SpatialTransformer(in_channels=ngf, n_heads=self.n_heads, d_head=self.d_head,depth=1,
             context_dim=self.latent_variable_size,feat_height=128,no_self_att = True)        
         self.res6 = res.ResBlock(ngf, dropout=0, out_channels=ngf, dims=2, up=True)
-        self.cross6 = att.SpatialTransformer(opt = opt, in_channels=ngf, n_heads=4, d_head=32,depth=1,
+        self.cross6 = att.SpatialTransformer(in_channels=ngf, n_heads=4, d_head=32,depth=1,
             context_dim=self.latent_variable_size,feat_height=256,no_self_att = True)    
         self.out_conv = nn.Conv2d(ngf,3,1,1)
 
@@ -169,6 +168,7 @@ class MultiScaleEffStyleEncoder(nn.Module):
         
         # Encoding
         for i, (in_kernel, out_kernel) in enumerate(self.kernels):
+            
             self.Encoder[f'enc_layer_{i}'] = nn.Sequential(nn.Conv2d(in_kernel,out_kernel, 3, 
                         stride = 2, padding=1, groups=self.nmc), 
                         nn.GroupNorm(self.nmc, out_kernel),

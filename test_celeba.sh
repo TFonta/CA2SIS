@@ -1,6 +1,6 @@
 python ./test.py --name celeba_model --exclude_bg \
     --sample_dir ./results/train_celeba/ --checkpoints_dir ./checkpoints/train_celeba/ \
-    --batchSize 16 --dataset_mode custom \
+    --batchSize 4 --dataset_mode custom \
     --label_dir ./datasets/CelebA-HQ/train/labels \
     --image_dir ./datasets/CelebA-HQ/train/images \
     --label_dir_test ./datasets/CelebA-HQ/test/labels \

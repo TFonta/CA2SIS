@@ -49,12 +49,9 @@ def create_network(cls, opt):
 
 
 def define_G(opt):
-    if not opt.SEAN:
-        G = RGB_model(opt, opt.label_nc,32,32, opt.style_dim)
-        return G.cuda() 
-    else:
-        netG_cls = find_network_using_name(opt.netG, 'generator')
-        return create_network(netG_cls, opt)
+    G = RGB_model(opt, opt.label_nc,32,32, opt.style_dim)
+    return G.cuda() 
+    
 
 
 def define_D(opt):
