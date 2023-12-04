@@ -15,6 +15,9 @@ class TestOptions(BaseOptions):
 
         parser.add_argument('--run_inference', action='store_true', help='execute the inference step. If false it loads the images from a previous run')
         parser.add_argument('--save_images', action='store_true', help='save generated images to file')
+        
+        parser.add_argument('--part_to_swap', default='eyes', help='choose part to swap')
+        parser.add_argument('--swap_type', default='style', help='style, shape, both')
 
         parser.set_defaults(preprocess_mode='scale_width_and_crop', crop_size=256, load_size=256, display_winsize=256)
         parser.set_defaults(serial_batches=True)

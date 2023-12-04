@@ -74,6 +74,10 @@ class CA2SISModel(torch.nn.Module):
             with torch.no_grad():
                 fake_image = self.generate_styles(input_semantics, real_image, p)
                 return fake_image
+        elif mode == 'swap_all':
+            with torch.no_grad():
+                fake_image = self.generate_styles_shape(input_semantics, real_image, p)
+                return fake_image    
         elif mode == 'parts_int':
             with torch.no_grad():
                 fake_image = self.generate_parts_interpolation(input_semantics, real_image, p)
@@ -259,7 +263,8 @@ class CA2SISModel(torch.nn.Module):
 
         fake_out = {'real':real_image,
                     'fake':fake_image,
-                    'fake_sw':fake_image_sw}
+                    'fake_sw':fake_image_sw,
+                    'mask': input_semantics}
 
         return fake_out #real_image, fake_image, fake_image_sw, p
 
@@ -322,8 +327,9 @@ class CA2SISModel(torch.nn.Module):
         else:
             m_sw = input_semantics
         
+        # Encode the mask
         z = self.netG.encode(m_sw)
-                    
+        # Encode the styles (using original mask)          
         s_org = self.netG.style_encoder(real_image, m)
 
         s_swap = s_org.clone()
@@ -337,12 +343,53 @@ class CA2SISModel(torch.nn.Module):
             s_org[:,part] = s_swap[:,part].clone()  
             
         fake_image = self.netG.decode(z,s_org)
-        
         fake_image_sw = self.netG.decode(z,s_swap)
 
         fake_out = {'real':real_image,
                     'fake':fake_image,
-                    'fake_sw': fake_image_sw}
+                    'fake_sw': fake_image_sw,
+                    'mask': input_semantics}
+
+        return fake_out
+    
+    
+    def generate_styles_shape(self, input_semantics, real_image, p):
+        
+        # Encode the styles (using original mask)
+        m = input_semantics
+        s_org = self.netG.style_encoder(real_image, m)
+        # ----------------------------------------
+        
+        # Encode and swap the mask ------------------------
+        if self.opt.exclude_bg:
+            m_sw = input_semantics[:,1:]
+        else:
+            m_sw = input_semantics
+        z = self.netG.encode(m_sw)
+        z_swap = z.clone()
+        first_half = z[:real_image.size(0)//2].clone()
+        second_half = z[real_image.size(0)//2:].clone()
+        z_swap[real_image.size(0)//2:] = first_half
+        z_swap[:real_image.size(0)//2] = second_half
+        # ----------------------------------------
+
+        # Swap style codes -----------------------
+        s_swap = s_org.clone()
+        first_half = s_org[:real_image.size(0)//2].clone()
+        second_half = s_org[real_image.size(0)//2:].clone()
+        s_swap[real_image.size(0)//2:] = first_half
+        s_swap[:real_image.size(0)//2] = second_half
+        # ----------------------------------------
+
+        for part in p:
+            s_org[:,part] = s_swap[:,part].clone() 
+            z[:,part-1] = z_swap[:,part-1].clone() # -1 because beackground removed
+            
+        fake_image = self.netG.decode(z,s_org)
+
+        fake_out = {'real':real_image,
+                    'fake':fake_image,
+                    'mask': input_semantics}
 
         return fake_out
 
