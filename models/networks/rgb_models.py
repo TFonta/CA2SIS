@@ -120,17 +120,18 @@ class RGB_model(nn.Module):
 
         out = self.reshape_conv(out)
         out = self.res2(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross2, m = m)
+        out, loss2 = self.cross_att(out = out, s = s, c_layer = self.cross2, m = m)
         out = self.res3(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross3, m = m)
+        out, loss3 = self.cross_att(out = out, s = s, c_layer = self.cross3, m = m)
         out = self.res4(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross4, m = m)
+        out, loss4 = self.cross_att(out = out, s = s, c_layer = self.cross4, m = m)
         out = self.res5(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross5, m = m)
+        out, loss5 = self.cross_att(out = out, s = s, c_layer = self.cross5, m = m)
         out = self.res6(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross6, m = m)
+        out, loss6 = self.cross_att(out = out, s = s, c_layer = self.cross6, m = m)
         out = self.out_conv(out)
-        return out 
+        att_loss = (loss2 + loss3 + loss4 + loss5 + loss6)/5
+        return out, att_loss 
 
     def get_latent_var(self, x):
         mu = self.encode(x)
