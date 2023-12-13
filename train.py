@@ -77,28 +77,19 @@ for epoch in iter_counter.training_epochs():
 
                 # save images
                 p = random.choices(gen_parts, k=part2swap)
-                out_sw = trainer.run_generator_swapped(data_i, p)
-
-                if opt.chann_out_21:
-                    out_sw['fake'] = out_sw['fake'][:,:3]
-                    out_sw['fake_sw'] = out_sw['fake_sw'][:,:3]
-
-
-                grid_img_real = util.tensor2im(torchvision.utils.make_grid(out_sw['real']).detach().cpu())
-                grid_img_rec = util.tensor2im(torchvision.utils.make_grid(out_sw['fake']).detach().cpu())
-                grid_img_swap = util.tensor2im(torchvision.utils.make_grid(out_sw['fake_sw']).detach().cpu())                
-                grid_list = [grid_img_real, grid_img_rec, grid_img_swap]
-
                 if opt.use_noise:
-                    out_z = trainer.generate_with_noise(data_i, p)
-                    grid_img_z = util.tensor2im(torchvision.utils.make_grid(out_z).detach().cpu())
-                    grid_list.append(grid_img_z)
-                
-                if opt.generate_masks:
-                    out_m = trainer.generate_with_mask(data_i, p)
-                    grid_img_m = util.tensor2im(torchvision.utils.make_grid(out_m).detach().cpu())
-                    grid_list.append(grid_img_m)
-                    
+                    rec_img = trainer.generate_with_noise(data_i, p)[0]
+                    if opt.att_loss:
+                        rec_img = rec_img[0]
+                else:
+                    rec_img = trainer.run_generator_swapped(data_i, p)
+            
+                grid_img_real = util.tensor2im(torchvision.utils.make_grid(data_i['image']).detach().cpu())
+                grid_img_rec = util.tensor2im(torchvision.utils.make_grid(rec_img).detach().cpu())
+                #grid_img_swap = util.tensor2im(torchvision.utils.make_grid(out_sw['fake_sw']).detach().cpu())                
+                grid_list = [grid_img_real, grid_img_rec]
+
+
                 grid = np.concatenate(grid_list, axis=0)
                     
                 os.makedirs(opt.sample_dir + str(epoch) + '/', exist_ok=True)

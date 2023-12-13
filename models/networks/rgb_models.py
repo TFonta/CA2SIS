@@ -61,6 +61,8 @@ class RGB_model(nn.Module):
                                                     num_feat = 4, num_mask_channels = self.nc, 
                                                     output_dim = self.latent_variable_size)
         
+        self.noise_encoder = MappingNetwork(latent_dim=self.latent_variable_size, style_dim=self.latent_variable_size*5, num_domains=self.nc)
+
         # decoder
         self.n_heads = 8
         self.d_head = 64
@@ -69,7 +71,7 @@ class RGB_model(nn.Module):
             self.reshape_conv = nn.Conv2d(self.nc - 1, ngf*16, 1, 1)
         else:
             self.reshape_conv = nn.Conv2d(self.nc, ngf*16, 1, 1)
-        
+                
         self.latent_variable_size = self.latent_variable_size*5
 
         self.res2 = res.ResBlock(ngf*16, dropout=0, out_channels=ngf*8, dims=2, up=False)
@@ -133,6 +135,14 @@ class RGB_model(nn.Module):
     def get_latent_var(self, x):
         mu = self.encode(x)
         return mu
+
+    def forward_noise(self, z, m):
+        m_enc = m.clone()
+        if self.exclude_bg:
+            m_enc = m_enc[:,1:]
+        e = self.encode(m_enc)
+        s = self.noise_encoder(z)
+        return self.decode(e,s,m), s
 
     def forward(self, rgb, m, m_sw, mode = None):
         #remove bg
@@ -232,5 +242,33 @@ class MultiScaleEffStyleEncoder(nn.Module):
         
         #[s1,s2,s3,s4,s5]
         return torch.cat(dec_style_feat, dim = 2)
+
+class MappingNetwork(nn.Module):
+    def __init__(self, latent_dim=512, style_dim=512, num_domains=19):
+        super().__init__()
+        layers = []
+        layers += [nn.Linear(latent_dim, 512)]
+        layers += [nn.ReLU()]
+        for _ in range(3):
+            layers += [nn.Linear(512, 512)]
+            layers += [nn.ReLU()]
+        self.shared = nn.Sequential(*layers)
+
+        self.unshared = nn.ModuleList()
+        for _ in range(num_domains):
+            self.unshared += [nn.Sequential(nn.Linear(512, 512),
+                                            nn.ReLU(),
+                                            nn.Linear(512, 512),
+                                            nn.ReLU(),
+                                            nn.Linear(512, 512),
+                                            nn.ReLU(),
+                                            nn.Linear(512, style_dim))]
+
+    def forward(self, z):
+        h = self.shared(z)
+        out = []
+        for layer in self.unshared:
+            out += [layer(h)]
+        return torch.stack(out, dim=1) 
 
 

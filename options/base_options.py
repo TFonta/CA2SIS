@@ -80,6 +80,8 @@ class BaseOptions():
         parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')
         parser.add_argument('--use_vae', action='store_true', help='enable training with an image encoder.')
         parser.add_argument('--att_loss', action='store_true', help='use attention loss.')
+        parser.add_argument('--use_noise', action='store_true', help='use noise during generation.')
+        parser.add_argument('--pretrained_path', type=str, default='/hpc/group/G_VBD/tomaso.fontanini/sean_swap/checkpoints/run18_no_elegant/RGB_model_no_bg/', help='network initialization [normal|xavier|kaiming|orthogonal]')
 
         self.initialized = True
         return parser
