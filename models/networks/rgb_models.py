@@ -106,10 +106,10 @@ class RGB_model(nn.Module):
         mu = self.encode_mask_parts(x)
         return mu
     
-    def cross_att(self, out, s, c_layer):
-        return c_layer(out,s)
+    def cross_att(self, out, s, c_layer, m = None):
+        return c_layer(out, s, m)
 
-    def decode(self, z, s):
+    def decode(self, z, s, m = None):
 
         if self.opt.ds_mode == "cityscapes":
             out = z.view(z.size(0), z.size(1), 16, 32)
@@ -118,15 +118,15 @@ class RGB_model(nn.Module):
 
         out = self.reshape_conv(out)
         out = self.res2(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross2)
+        out = self.cross_att(out = out, s = s, c_layer = self.cross2, m = m)
         out = self.res3(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross3)
+        out = self.cross_att(out = out, s = s, c_layer = self.cross3, m = m)
         out = self.res4(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross4)
+        out = self.cross_att(out = out, s = s, c_layer = self.cross4, m = m)
         out = self.res5(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross5)
+        out = self.cross_att(out = out, s = s, c_layer = self.cross5, m = m)
         out = self.res6(out)
-        out = self.cross_att(out = out, s = s, c_layer = self.cross6)
+        out = self.cross_att(out = out, s = s, c_layer = self.cross6, m = m)
         out = self.out_conv(out)
         return out 
 
@@ -140,9 +140,10 @@ class RGB_model(nn.Module):
             m_sw = m_sw[:,1:]
         z = self.encode(m_sw)
         s = self.style_encoder(rgb, m)
-        res = self.decode(z,s)
+        
+        res = self.decode(z,s,m)
 
-        return res 
+        return res # returns rgb, att_loss
 
 class MultiScaleEffStyleEncoder(nn.Module):
     def __init__(self, input_channels = 3, num_mask_channels = 19, num_downsample = 4, num_upsample = 3, 

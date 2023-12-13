@@ -277,6 +277,8 @@ class CrossAttention(nn.Module):
             nn.Dropout(dropout)
         )
 
+        self.bce = nn.BCEWithLogitsLoss()
+
     def forward(self, x, context=None, mask=None):
         h = self.heads
         q = self.to_q(x)
@@ -288,19 +290,40 @@ class CrossAttention(nn.Module):
 
         sim = torch.einsum('b i d, b j d -> b i j', q, k) * self.scale
 
-        if exists(mask):
-            mask = rearrange(mask, 'b ... -> b (...)')
-            max_neg_value = -torch.finfo(sim.dtype).max
-            mask = repeat(mask, 'b j -> (b h) () j', h=h)
-            sim.masked_fill_(~mask, max_neg_value)
-
         # attention, what we cannot get enough of
-        attn = sim.softmax(dim=-1)
+        attn = sim
 
-        out = torch.einsum('b i j, b j d -> b i d', attn, v)
-        
-        out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
-        return self.to_out(out)
+        if exists(mask):
+            attn = attn.view(attn.size(0)//h, h, int(math.sqrt(attn.size(1))), int(math.sqrt(attn.size(1))), attn.size(2))
+            attn = attn.permute(0, 1, 4, 2, 3)
+
+            attn_m = torch.mean(attn, dim = 1)
+            mask = nn.functional.interpolate(mask, size=(attn.size(3), attn.size(4)), mode='nearest')
+            
+            count = 0
+            loss = 0
+            for i in range(attn.size(2)):
+                loss += self.bce(attn_m[:, i].unsqueeze(1), mask[:, i].unsqueeze(1))
+                count += 1
+            
+            loss = loss / count
+
+            attn = attn.permute(0, 1, 3, 4, 2)
+            attn = attn.view(attn.size(0)*h, attn.size(2)*attn.size(3), attn.size(4))
+
+            attn = attn.softmax(dim=-1)
+
+            out = torch.einsum('b i j, b j d -> b i d', attn, v)
+            
+            out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
+            return self.to_out(out), loss        
+        else:
+            attn = attn.softmax(dim=-1)
+
+            out = torch.einsum('b i j, b j d -> b i d', attn, v)
+            
+            out = rearrange(out, '(b h) n d -> b n (h d)', h=h)
+            return self.to_out(out)
 
 
 class BasicTransformerBlock(nn.Module):

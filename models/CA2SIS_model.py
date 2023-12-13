@@ -155,14 +155,29 @@ class CA2SISModel(torch.nn.Module):
             input_semantics = torch.cat((input_semantics, instance_edge_map), dim=1)
 
         return input_semantics, data['image']
-
+    def attention_loss(self, dec_feat_att, m):
+        loss = 0
+        count = 0
+        
+        for att in dec_feat_att:
+            for c in range(att.size(1)):
+                m_int = nn.functional.interpolate(m, size=(att.size(2), att.size(3)), mode='nearest')
+                if self.opt.ce_weights:
+                    loss += self.weights[c]*self.bce(att[:,c].unsqueeze(1), m_int[:,c].unsqueeze(1))
+                else:
+                    loss += self.bce(att[:,c].unsqueeze(1), m_int[:,c].unsqueeze(1))
+                count += 1        
+        return loss/count
     def compute_generator_loss(self, input_semantics, real_image, data):
         G_losses = {}
 
         fake_image = self.generate_fake(
             input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
-        fake_image_D = fake_image.clone()
-    
+        if self.opt.att_loss:
+            fake_image_D = fake_image[0]
+            G_losses['att_loss'] = fake_image[1]
+        else:
+            fake_image_D = fake_image
 
         pred_fake, pred_real = self.discriminate(
             input_semantics, fake_image_D, real_image)
@@ -194,7 +209,10 @@ class CA2SISModel(torch.nn.Module):
         with torch.no_grad():
 
             fake_image = self.generate_fake(input_semantics, real_image)
-            fake_image_D = fake_image.clone()
+            if self.opt.att_loss:
+                fake_image_D = fake_image[0]
+            else:
+                fake_image_D = fake_image
         
             
             fake_image_D = fake_image_D.detach()
