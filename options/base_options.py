@@ -83,6 +83,8 @@ class BaseOptions():
         parser.add_argument('--use_noise', action='store_true', help='use noise during generation.')
         parser.add_argument('--pretrained_path', type=str, default='/hpc/group/G_VBD/tomaso.fontanini/sean_swap/checkpoints/run18_no_elegant/RGB_model_no_bg/', help='network initialization [normal|xavier|kaiming|orthogonal]')
 
+        parser.add_argument('--use_ema', action='store_true', help='train with exponential moving average.')
+
         self.initialized = True
         return parser
 

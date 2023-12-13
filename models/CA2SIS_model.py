@@ -82,6 +82,10 @@ class CA2SISModel(torch.nn.Module):
             with torch.no_grad():
                 fake_image = self.generate_parts_interpolation(input_semantics, real_image, p)
                 return fake_image
+        elif mode == 'generate_with_noise':
+            with torch.no_grad():
+                fake_image = self.generate_with_noise(input_semantics)
+                return fake_image
         else:
             raise ValueError("|mode| is invalid")
 

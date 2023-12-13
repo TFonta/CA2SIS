@@ -3,9 +3,10 @@ Copyright (C) 2019 NVIDIA Corporation.  All rights reserved.
 Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 """
 import torch
+import os
 from models.networks.sync_batchnorm import DataParallelWithCallback
 from models.CA2SIS_model import CA2SISModel
-
+from ema_pytorch import EMA
 class CA2SISTrainer():
     """
     Trainer creates the model and optimizers, and uses them to
@@ -34,6 +35,26 @@ class CA2SISTrainer():
                 self.pix2pix_model_on_one_gpu.create_optimizers(opt)
             self.old_lr = opt.lr
 
+        if self.opt.use_ema:
+            self.load_ema()
+
+    def load_ema(self):
+        self.ema = EMA(self.pix2pix_model_on_one_gpu,
+                  beta = 0.9999,              # exponential moving average factor
+                  update_after_step = 100,    # only after this number of .update() calls will it start updating
+                  update_every = 10,          # how often to actually update, to save on compute (updates every 10th .update() call)
+                  power = 3 / 4              # decay factor to prevent the EMA from ever fully "catching up" with the raw model
+                )
+        print("EMA initialized!!!", flush = True)
+        
+        if self.opt.continue_train or self.opt.isTrain==False:
+            self.ema.load_state_dict(torch.load(os.path.join(self.opt.checkpoints_dir, 'ema.pth')))
+            print("EMA loaded!!!", flush = True)
+
+    def update_ema(self):
+        if self.opt.use_ema:
+            self.ema.update()
+
     def run_generator_one_step(self, data):
         self.optimizer_G.zero_grad()
         g_losses, generated = self.pix2pix_model(data, mode='generator')
@@ -53,17 +74,27 @@ class CA2SISTrainer():
 
     def run_generator_swapped(self, data, p):
         #generated = self.pix2pix_model(data, mode='swap_part')
-        generated = self.pix2pix_model_on_one_gpu(data, mode='swap_part', p=p)
+        if self.opt.use_ema:
+            print("Data generated with EMA!!!", flush = True)
+            generated = self.ema(data, mode='swap_part', p=p)
+        else:
+            generated = self.pix2pix_model_on_one_gpu(data, mode='swap_part', p=p)
         return generated
     
     def generate_with_noise(self, data, p):
         #generated = self.pix2pix_model(data, mode='swap_part')
-        generated = self.pix2pix_model_on_one_gpu(data, mode='generate_with_noise', p=p)
+        if self.opt.use_ema:
+            generated = self.ema(data, mode='generate_with_noise', p=p)
+        else:
+            generated = self.pix2pix_model_on_one_gpu(data, mode='generate_with_noise', p=p)
         return generated
 
     def generate_with_mask(self, data, p):
         #generated = self.pix2pix_model(data, mode='swap_part')
-        generated = self.pix2pix_model_on_one_gpu(data, mode='generate_with_mask', p=p)
+        if self.opt_use_ema:
+            generated = self.ema(data, mode='generate_with_mask', p=p)
+        else:
+            generated = self.pix2pix_model_on_one_gpu(data, mode='generate_with_mask', p=p)
         return generated
 
     def get_latest_losses(self):
@@ -77,6 +108,9 @@ class CA2SISTrainer():
         self.update_learning_rate(epoch)
 
     def save(self, epoch):
+        if self.opt.use_ema:
+            print("Saving EMA!!!", flush = True)
+            torch.save(self.ema.state_dict(), os.path.join(self.opt.checkpoints_dir, 'ema.pth'))
         self.pix2pix_model_on_one_gpu.save(epoch)
 
     ##################################################################

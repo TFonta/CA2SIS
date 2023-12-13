@@ -66,6 +66,9 @@ for epoch in iter_counter.training_epochs():
         # train discriminator
         trainer.run_discriminator_one_step(data_i)
 
+        if opt.use_ema:
+            trainer.update_ema()
+
         # Visualizations
         with torch.no_grad():
             if i % opt.print_freq == 0:
