@@ -137,9 +137,8 @@ class RGB_model(nn.Module):
         return mu
 
     def forward_noise(self, z, m):
-        m_enc = m.clone()
-        if self.exclude_bg:
-            m_enc = m_enc[:,1:]
+        m_enc = m.clone()        
+        m_enc = m_enc[:,1:]
         e = self.encode(m_enc)
         s = self.noise_encoder(z)
         return self.decode(e,s,m), s
