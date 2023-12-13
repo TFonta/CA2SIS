@@ -338,14 +338,15 @@ class BasicTransformerBlock(nn.Module):
         self.norm3 = nn.LayerNorm(dim)
         self.checkpoint = checkpoint
 
-    def forward(self, x, context=None):
-        return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
+    def forward(self, x, context=None, mask = None):
+        return checkpoint(self._forward, (x, context, mask), self.parameters(), self.checkpoint)
 
-    def _forward(self, x, context=None):
+    def _forward(self, x, context=None, mask = None):
         x = self.attn1(self.norm1(x)) + x
-        x = self.attn2(self.norm2(x), context=context) + x
+        x1, loss = self.attn2(self.norm2(x), context=context, mask = mask)
+        x = x1 + x
         x = self.ff(self.norm3(x)) + x
-        return x
+        return x, loss
 
 class BasicTransformerBlockNoSelfAtt(nn.Module):
     def __init__(self, dim, n_heads, d_head, dropout=0., context_dim=None, gated_ff=True, checkpoint=True):
@@ -357,13 +358,14 @@ class BasicTransformerBlockNoSelfAtt(nn.Module):
         self.norm3 = nn.LayerNorm(dim)
         self.checkpoint = checkpoint
 
-    def forward(self, x, context=None):
-        return checkpoint(self._forward, (x, context), self.parameters(), self.checkpoint)
+    def forward(self, x, context=None, mask = None):
+        return checkpoint(self._forward, (x, context, mask), self.parameters(), self.checkpoint)
 
-    def _forward(self, x, context=None):
-        x = self.attn2(self.norm2(x), context=context) + x
+    def _forward(self, x, context=None, mask = None):
+        x1, loss = self.attn2(self.norm2(x), context=context, mask = mask)
+        x = x1 + x
         x = self.ff(self.norm3(x)) + x
-        return x
+        return x, loss
 
 
 class SpatialTransformer(nn.Module):
@@ -406,7 +408,7 @@ class SpatialTransformer(nn.Module):
                                               stride=1,
                                               padding=0))
 
-    def forward(self, x, context=None):
+    def forward(self, x, context=None, mask = None):
         # note: if no context is given, cross-attention defaults to self-attention
         x_in = x
         if len(x.size()) == 4:
@@ -414,22 +416,12 @@ class SpatialTransformer(nn.Module):
             x = self.norm(x)
             x = self.proj_in(x)
             x = rearrange(x, 'b c h w -> b (h w) c') # bs x h*w x c
-            
+            loss = 0
             for block in self.transformer_blocks:
-                x = block(x, context=context)
+                x, loss = block(x, context=context, mask = mask)
             x = rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
             x = self.proj_out(x)
-        # else:
-        #     #x = self.norm(x)
-        #     context = self.proj_context(context)
-        #     context = rearrange(context, 'b c l -> b l c')
-        #     x = self.proj_z(x)
-        #     x = rearrange(x, 'b c l -> b l c')
-        #     for block in self.transformer_blocks:
-        #         x = block(x, context=context)
-        #     context = rearrange(context, 'b l c -> b c l')
-        #     x = rearrange(x, 'b l c -> b c l')
-        return x + x_in
+        return x + x_in, loss
 
 
 def checkpoint(func, inputs, params, flag):
