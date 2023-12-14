@@ -200,7 +200,8 @@ class CA2SISModel(torch.nn.Module):
         fake_image2 = fake_images[input_semantics.size(0):]
 
         s_hat = self.netG.style_encoder(fake_image1, input_semantics)
-        s_error = torch.mean(torch.abs(s - s_hat.detach()))
+        
+        s_error = torch.mean(torch.abs(s[:input_semantics.size(0)] - s_hat.detach()))
         
         return s_error - torch.abs(fake_image1 - fake_image2).mean()  
 
@@ -208,10 +209,11 @@ class CA2SISModel(torch.nn.Module):
         G_losses = {}
 
         if self.opt.use_noise:
-            fake_image = self.generate_with_noise(input_semantics)[0]
+            fake_image = self.generate_with_noise(input_semantics)[0]            
             G_losses['ds_loss'] = self.diversity_loss(input_semantics)
         else:
             fake_image = self.generate_fake(input_semantics, real_image)
+
         if self.opt.att_loss:
             fake_image_D = fake_image[0]
             G_losses['att_loss'] = fake_image[1]
@@ -238,10 +240,10 @@ class CA2SISModel(torch.nn.Module):
             G_losses['GAN_Feat'] = GAN_Feat_loss
 
         if not self.opt.no_vgg_loss:
-            G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
+            G_losses['VGG'] = self.criterionVGG(fake_image_D, real_image) \
                 * self.opt.lambda_vgg
 
-        return G_losses, fake_image
+        return G_losses, fake_image_D
 
     def compute_discriminator_loss(self, input_semantics, real_image):
         D_losses = {}
