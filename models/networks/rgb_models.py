@@ -138,10 +138,17 @@ class RGB_model(nn.Module):
         return mu
 
     def forward_noise(self, z, m):
-        m_enc = m.clone()        
+        m_enc = m.clone()       
+
         m_enc = m_enc[:,1:]
         e = self.encode(m_enc)
         s = self.noise_encoder(z)
+
+        zeros_ch = torch.sum(m, dim = (2,3)) > 0
+        zeros_ch = zeros_ch.unsqueeze(2)
+        zeros_ch = zeros_ch.repeat(1,1, s.size(2))
+        s = s*zeros_ch
+        
         return self.decode(e,s,m), s
 
     def forward(self, rgb, m, m_sw, mode = None):
