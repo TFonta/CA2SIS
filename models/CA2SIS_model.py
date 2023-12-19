@@ -133,8 +133,14 @@ class CA2SISModel(torch.nn.Module):
             elif opt.use_noise and opt.isTrain:
                 pretrained_path = os.path.join(opt.pretrained_path, 'latest_net_G.pth')
                 weights = torch.load(pretrained_path)
-                netG.load_state_dict(weights, strict=False)
+                #print(weights.keys())
+                netG.load_state_dict(weights, strict=False) #
                 print("PRETRAINED G LOADED!")
+
+                pretrained_path_D = os.path.join(opt.pretrained_path, 'latest_net_D.pth')
+                weights_D = torch.load(pretrained_path_D)
+
+                netD.load_state_dict(weights_D) #
 
         return netG, netD, netE
 
@@ -182,43 +188,35 @@ class CA2SISModel(torch.nn.Module):
                 count += 1        
         return loss/count
 
-    def diversity_loss(self, input_semantics):
+    def diversity_loss(self, fake_image1, s1, input_semantics):
 
-        z1 = torch.randn(input_semantics.size(0), self.opt.style_dim).to(input_semantics.device)
         z2 = torch.randn(input_semantics.size(0), self.opt.style_dim).to(input_semantics.device)
-        
-        z12 = torch.cat((z1,z2), dim=0)
-        input_semantics12 = torch.cat((input_semantics,input_semantics), dim=0)
 
         if self.opt.att_loss:
-            fake_images, s = self.netG.forward_noise(z12, input_semantics12)
-            fake_images = fake_images[0]
+            fake_image2, _, s2 = self.netG.forward_noise(z2, input_semantics)
         else:
-            fake_images, s = self.netG.forward_noise(z12, input_semantics12)
-
-        fake_image1 = fake_images[:input_semantics.size(0)]
-        fake_image2 = fake_images[input_semantics.size(0):]
+            fake_image2, s2 = self.netG.forward_noise(z2, input_semantics)
 
         s_hat = self.netG.style_encoder(fake_image1, input_semantics)
         
-        s_error = torch.mean(torch.abs(s[:input_semantics.size(0)] - s_hat.detach()))
+        s_error = torch.mean(torch.abs(s1 - s_hat.detach()))
         
-        return s_error - torch.abs(fake_image1 - fake_image2).mean()  
+        return s_error - torch.abs(fake_image1 - fake_image2.detach()).mean()  
 
     def compute_generator_loss(self, input_semantics, real_image, data):
         G_losses = {}
 
         if self.opt.use_noise:
-            fake_image = self.generate_with_noise(input_semantics)[0]            
-            G_losses['ds_loss'] = self.diversity_loss(input_semantics)
+            fake_image = self.generate_with_noise(input_semantics)            
         else:
             fake_image = self.generate_fake(input_semantics, real_image)
 
         if self.opt.att_loss:
             fake_image_D = fake_image[0]
-            G_losses['att_loss'] = fake_image[1]
+            G_losses['ds_loss'] = self.diversity_loss(fake_image_D, fake_image[2], input_semantics)
+            #G_losses['att_loss'] = fake_image[1]
         else:
-            fake_image_D = fake_image
+            fake_image_D = fake_image[0]
 
         pred_fake, pred_real = self.discriminate(
             input_semantics, fake_image_D, real_image)
@@ -227,21 +225,21 @@ class CA2SISModel(torch.nn.Module):
                                             for_discriminator=False)
 
 
-        if not self.opt.no_ganFeat_loss:
-            num_D = len(pred_fake)
-            GAN_Feat_loss = self.FloatTensor(1).fill_(0)
-            for i in range(num_D):  # for each discriminator
-                # last output is the final prediction, so we exclude it
-                num_intermediate_outputs = len(pred_fake[i]) - 1
-                for j in range(num_intermediate_outputs):  # for each layer output
-                    unweighted_loss = self.criterionFeat(
-                        pred_fake[i][j], pred_real[i][j].detach())
-                    GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
-            G_losses['GAN_Feat'] = GAN_Feat_loss
+        # if not self.opt.no_ganFeat_loss:
+        #     num_D = len(pred_fake)
+        #     GAN_Feat_loss = self.FloatTensor(1).fill_(0)
+        #     for i in range(num_D):  # for each discriminator
+        #         # last output is the final prediction, so we exclude it
+        #         num_intermediate_outputs = len(pred_fake[i]) - 1
+        #         for j in range(num_intermediate_outputs):  # for each layer output
+        #             unweighted_loss = self.criterionFeat(
+        #                 pred_fake[i][j], pred_real[i][j].detach())
+        #             GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
+        #     G_losses['GAN_Feat'] = GAN_Feat_loss
 
-        if not self.opt.no_vgg_loss:
-            G_losses['VGG'] = self.criterionVGG(fake_image_D, real_image) \
-                * self.opt.lambda_vgg
+        # if not self.opt.no_vgg_loss:
+        #     G_losses['VGG'] = self.criterionVGG(fake_image_D, real_image) \
+        #         * self.opt.lambda_vgg
 
         return G_losses, fake_image_D
 
@@ -249,14 +247,14 @@ class CA2SISModel(torch.nn.Module):
         D_losses = {}
         with torch.no_grad():
             if self.opt.use_noise:
-                fake_image = self.generate_with_noise(input_semantics)[0]
+                fake_image = self.generate_with_noise(input_semantics)
             else:
                 fake_image = self.generate_fake(input_semantics, real_image)
 
             if self.opt.att_loss:
                 fake_image_D = fake_image[0]
             else:
-                fake_image_D = fake_image
+                fake_image_D = fake_image[0]
         
             
             fake_image_D = fake_image_D.detach()
@@ -287,8 +285,12 @@ class CA2SISModel(torch.nn.Module):
     def generate_with_noise(self, input_semantics):
 
         z = torch.randn(input_semantics.size(0), self.opt.style_dim).to(input_semantics.device)
-        fake_image = self.netG.forward_noise(z, input_semantics)
-        return fake_image
+        if self.opt.att_loss:
+            fake_image, dec_feat_att, s = self.netG.forward_noise(z, input_semantics)
+            return fake_image, dec_feat_att, s
+        else:
+            fake_image,_ = self.netG.forward_noise(z, input_semantics)
+            return fake_image
 
 ###############################################################
 

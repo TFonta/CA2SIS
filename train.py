@@ -81,11 +81,11 @@ for epoch in iter_counter.training_epochs():
                 # save images
                 p = random.choices(gen_parts, k=part2swap)
                 if opt.use_noise:
-                    rec_img = trainer.generate_with_noise(data_i, p)[0]
+                    rec_img = trainer.generate_with_noise(data_i, p)
                     if opt.att_loss:
                         rec_img = rec_img[0]
                 else:
-                    rec_img = trainer.run_generator_swapped(data_i, p)
+                    rec_img = trainer.run_generator_swapped(data_i, p)[0]
             
                 grid_img_real = util.tensor2im(torchvision.utils.make_grid(data_i['image']).detach().cpu())
                 grid_img_rec = util.tensor2im(torchvision.utils.make_grid(rec_img).detach().cpu())

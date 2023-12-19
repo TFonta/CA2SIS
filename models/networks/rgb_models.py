@@ -94,6 +94,7 @@ class RGB_model(nn.Module):
         self.cross6 = att.SpatialTransformer(in_channels=ngf, n_heads=4, d_head=32,depth=1,
             context_dim=self.latent_variable_size,feat_height=256,no_self_att = True)    
         self.out_conv = nn.Conv2d(ngf,3,1,1)
+        self.tanh = nn.Tanh()
 
     def encode_mask_parts(self, x): #B,18,256,256 
         mu = self.encs(x)
@@ -131,6 +132,9 @@ class RGB_model(nn.Module):
         out, loss6 = self.cross_att(out = out, s = s, c_layer = self.cross6, m = m)
         out = self.out_conv(out)
         att_loss = (loss2 + loss3 + loss4 + loss5 + loss6)/5
+        
+        out = self.tanh(out)
+        
         return out, att_loss 
 
     def get_latent_var(self, x):
@@ -149,7 +153,13 @@ class RGB_model(nn.Module):
         zeros_ch = zeros_ch.repeat(1,1, s.size(2))
         s = s*zeros_ch
         
-        return self.decode(e,s,m), s
+        if self.opt.att_loss:
+            res, att_loss = self.decode(e,s,m)
+            return res, att_loss, s
+        else:
+            res = self.decode(e,s,m)
+            return res, s
+            
 
     def forward(self, rgb, m, m_sw, mode = None):
         #remove bg
