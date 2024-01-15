@@ -61,7 +61,7 @@ class RGB_model(nn.Module):
                                                     num_feat = 4, num_mask_channels = self.nc, 
                                                     output_dim = self.latent_variable_size)
         
-        self.noise_encoder = MappingNetwork(latent_dim=self.mapping_dim, style_dim=self.latent_variable_size*5, num_domains=self.nc)
+        self.noise_encoder = MappingNetwork(latent_dim=self.opt.mapping_dim, style_dim=self.latent_variable_size*5, num_domains=self.nc)
 
         # decoder
         self.n_heads = 8
