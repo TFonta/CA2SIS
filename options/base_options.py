@@ -27,7 +27,8 @@ class BaseOptions():
         parser.add_argument('--style_enc_kernel', type=int, default=5, help='kernel of the first layer of style encoder')
         parser.add_argument('--style_enc_feat_dim', type=int, default=4, help='feature dimention of the style encoder')
 
-        parser.add_argument('--style_dim', type=int, default=256, help='style dimention')
+        parser.add_argument('--style_dim', type=int, default=256, help='style dimension')
+        parser.add_argument('--mapping_dim', type=int, default=16, help='mapping net input dimension')
 
         # experiment specifics
         parser.add_argument('--name', type=str, default='label2coco', help='name of the experiment. It decides where to store samples and models')

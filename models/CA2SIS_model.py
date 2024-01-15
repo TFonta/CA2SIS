@@ -137,10 +137,10 @@ class CA2SISModel(torch.nn.Module):
                 netG.load_state_dict(weights, strict=False) #
                 print("PRETRAINED G LOADED!")
 
-                pretrained_path_D = os.path.join(opt.pretrained_path, 'latest_net_D.pth')
-                weights_D = torch.load(pretrained_path_D)
+                # pretrained_path_D = os.path.join(opt.pretrained_path, 'latest_net_D.pth')
+                # weights_D = torch.load(pretrained_path_D)
 
-                netD.load_state_dict(weights_D) #
+                # netD.load_state_dict(weights_D) #
 
         return netG, netD, netE
 
@@ -190,7 +190,7 @@ class CA2SISModel(torch.nn.Module):
 
     def diversity_loss(self, fake_image1, s1, input_semantics):
 
-        z2 = torch.randn(input_semantics.size(0), self.opt.style_dim).to(input_semantics.device)
+        z2 = torch.randn(input_semantics.size(0), self.opt.mapping_dim).to(input_semantics.device)
 
         if self.opt.att_loss:
             fake_image2, _, s2 = self.netG.forward_noise(z2, input_semantics)
@@ -214,7 +214,7 @@ class CA2SISModel(torch.nn.Module):
         if self.opt.att_loss:
             fake_image_D = fake_image[0]
             G_losses['ds_loss'] = self.diversity_loss(fake_image_D, fake_image[2], input_semantics)
-            #G_losses['att_loss'] = fake_image[1]
+            G_losses['att_loss'] = fake_image[1]
         else:
             fake_image_D = fake_image[0]
 
@@ -284,7 +284,7 @@ class CA2SISModel(torch.nn.Module):
 
     def generate_with_noise(self, input_semantics):
 
-        z = torch.randn(input_semantics.size(0), self.opt.style_dim).to(input_semantics.device)
+        z = torch.randn(input_semantics.size(0), self.opt.mapping_dim).to(input_semantics.device)
         if self.opt.att_loss:
             fake_image, dec_feat_att, s = self.netG.forward_noise(z, input_semantics)
             return fake_image, dec_feat_att, s

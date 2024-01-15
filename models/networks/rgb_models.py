@@ -61,7 +61,7 @@ class RGB_model(nn.Module):
                                                     num_feat = 4, num_mask_channels = self.nc, 
                                                     output_dim = self.latent_variable_size)
         
-        self.noise_encoder = MappingNetwork(latent_dim=self.latent_variable_size, style_dim=self.latent_variable_size*5, num_domains=self.nc)
+        self.noise_encoder = MappingNetwork(latent_dim=self.mapping_dim, style_dim=self.latent_variable_size*5, num_domains=self.nc)
 
         # decoder
         self.n_heads = 8
@@ -71,7 +71,7 @@ class RGB_model(nn.Module):
             self.reshape_conv = nn.Conv2d(self.nc - 1, ngf*16, 1, 1)
         else:
             self.reshape_conv = nn.Conv2d(self.nc, ngf*16, 1, 1)
-                
+        
         self.latent_variable_size = self.latent_variable_size*5
 
         self.res2 = res.ResBlock(ngf*16, dropout=0, out_channels=ngf*8, dims=2, up=False)
