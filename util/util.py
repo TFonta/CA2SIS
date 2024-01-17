@@ -12,7 +12,9 @@ from PIL import Image
 import os
 import argparse
 import dill as pickle
-import util.coco
+import util.coco    
+import torchvision
+import math
 
 
 def save_obj(obj, name):
@@ -275,3 +277,28 @@ class Colorize(object):
             color_image[2][mask] = self.cmap[label][2]
 
         return color_image
+    
+def save_attention_maps(attn, heads, dim):
+    attn = attn.view(attn.size(0)//heads, heads, int(math.sqrt(attn.size(1))), int(math.sqrt(attn.size(1))), attn.size(2))
+    attn = attn.permute(0, 1, 4, 2, 3) # B H C H W
+
+    grid = []
+    for i in range(attn.size(1)):
+        head_imgs = []
+        for j in range(attn.size(2)):
+            att = attn[:, i, j].unsqueeze(1)
+            att = torch.nn.functional.interpolate(att, size=(256,256), mode='bilinear', align_corners=False)
+            head_imgs.append(att)
+        head_imgs = torch.cat(head_imgs, dim = 3)
+        grid.append(head_imgs)
+
+    grid_m = torch.cat(grid, dim = 0)
+    grid_m = torch.mean(grid_m, dim = 0).unsqueeze(0)
+    grid = torch.cat(grid, dim = 2)
+
+    save_path = './attention_maps/'
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    torchvision.utils.save_image(grid, save_path + 'grid_{}.png'.format(int(dim)))
+    torchvision.utils.save_image(grid_m, save_path + 'grid_mean_{}.png'.format(int(dim)))
+

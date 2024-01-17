@@ -190,18 +190,20 @@ class CA2SISModel(torch.nn.Module):
 
     def diversity_loss(self, fake_image1, s1, input_semantics):
 
-        z2 = torch.randn(input_semantics.size(0), self.opt.mapping_dim).to(input_semantics.device)
-
-        if self.opt.att_loss:
-            fake_image2, _, s2 = self.netG.forward_noise(z2, input_semantics)
-        else:
-            fake_image2, s2 = self.netG.forward_noise(z2, input_semantics)
-
-        s_hat = self.netG.style_encoder(fake_image1, input_semantics)
-        
+        s_hat = self.netG.style_encoder(fake_image1, input_semantics)            
         s_error = torch.mean(torch.abs(s1 - s_hat.detach()))
-        
-        return s_error - torch.abs(fake_image1 - fake_image2.detach()).mean()  
+
+        if self.opt.ds_loss:
+            z2 = torch.randn(input_semantics.size(0), self.opt.mapping_dim).to(input_semantics.device)
+
+            if self.opt.att_loss:
+                fake_image2, _, s2 = self.netG.forward_noise(z2, input_semantics)
+            else:
+                fake_image2, s2 = self.netG.forward_noise(z2, input_semantics)
+            
+            return s_error - torch.abs(fake_image1 - fake_image2.detach()).mean()  
+        else:
+            return s_error          
 
     def compute_generator_loss(self, input_semantics, real_image, data):
         G_losses = {}

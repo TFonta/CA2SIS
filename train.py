@@ -42,6 +42,14 @@ opt = TrainOptions().parse()
 # print options to help debugging
 print(' '.join(sys.argv))
 
+
+# def load_nvme_dataset(cfg):
+#     root_path_nvme = cfg.dataset.root_path.rstrip('/') + '_nvme'
+#     if os.path.exists(root_path_nvme):
+#         # update path to read from nvme disk
+#         cfg.dataset.root_path = root_path_nvme
+#         print('load dataset from {}'.format(cfg.dataset.root_path))
+
 # load the dataset
 dataloader = data.create_dataloader(opt)
 print("Data Loaded!!!", flush = True)

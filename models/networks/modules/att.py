@@ -11,6 +11,8 @@ from inspect import isfunction
 import math
 from einops import rearrange, repeat
 from functools import partial
+from util import util
+
 # from torch.utils.checkpoint import checkpoint
 def exists(val):
     return val is not None

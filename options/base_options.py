@@ -29,6 +29,7 @@ class BaseOptions():
 
         parser.add_argument('--style_dim', type=int, default=256, help='style dimension')
         parser.add_argument('--mapping_dim', type=int, default=16, help='mapping net input dimension')
+        parser.add_argument('--ds_loss', action='store_true', help='use diversity loss')
 
         # experiment specifics
         parser.add_argument('--name', type=str, default='label2coco', help='name of the experiment. It decides where to store samples and models')
