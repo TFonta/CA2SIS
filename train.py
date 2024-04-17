@@ -94,11 +94,10 @@ for epoch in iter_counter.training_epochs():
                     if opt.att_loss:
                         rec_img = rec_img[0]
                 else:
-                    rec_img = trainer.run_generator_swapped(data_i, p)[0]
+                    rec_img = trainer.run_generator_swapped(data_i, p)["fake"]
             
                 grid_img_real = util.tensor2im(torchvision.utils.make_grid(data_i['image']).detach().cpu())
-                grid_img_rec = util.tensor2im(torchvision.utils.make_grid(rec_img).detach().cpu())
-                #grid_img_swap = util.tensor2im(torchvision.utils.make_grid(out_sw['fake_sw']).detach().cpu())                
+                grid_img_rec = util.tensor2im(torchvision.utils.make_grid(rec_img).detach().cpu())              
                 grid_list = [grid_img_real, grid_img_rec]
 
 
@@ -107,7 +106,6 @@ for epoch in iter_counter.training_epochs():
                 os.makedirs(opt.sample_dir + str(epoch) + '/', exist_ok=True)
 
                 transforms.ToPILImage()(grid).save(opt.sample_dir + str(epoch) + '/' + str(i) + '_' + label_list[p[0]] + '.png')
-                #transforms.ToPILImage()(grid).save(opt.sample_dir + str(epoch) + '/' + str(i) + '_' + '.png')
 
         if iter_counter.needs_saving():
             print('saving the latest model (epoch %d, total_steps %d)' %
