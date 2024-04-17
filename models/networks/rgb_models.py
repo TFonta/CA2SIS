@@ -157,7 +157,7 @@ class RGB_model(nn.Module):
             res, att_loss = self.decode(e,s,m)
             return res, att_loss, s
         else:
-            res = self.decode(e,s,m)
+            res = self.decode(e,s)
             return res, s
             
 
@@ -172,7 +172,7 @@ class RGB_model(nn.Module):
             res, att_loss= self.decode(z,s,m)
             return res, att_loss
         else:
-            res = self.decode(z,s,m)
+            res = self.decode(z,s)
             return res # returns rgb, att_loss
 
 class MultiScaleEffStyleEncoder(nn.Module):

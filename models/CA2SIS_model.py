@@ -316,10 +316,14 @@ class CA2SISModel(torch.nn.Module):
 
         input_semantics_sw, _ = self.swap_parts(input_semantics, p, randp=False, k=len(p))
         fake_image_sw = self.netG(real_image, input_semantics, input_semantics_sw)
+        if self.opt.att_loss:
+            fake_image_sw = fake_image_sw[0]
         
         if not style_swap:
             start_time = time.time()
             fake_image = self.netG(real_image, input_semantics, input_semantics)  
+            if self.opt.att_loss:
+                fake_image = fake_image[0]
             #print("--- %s seconds ---" % (time.time() - start_time))      
         else:
             # invert real images order
@@ -339,6 +343,8 @@ class CA2SISModel(torch.nn.Module):
             input_semantics_styles_sw[real_image.size(0)//2:] = first_half
 
             fake_image = self.netG(real_image, input_semantics_styles_sw, input_semantics) 
+            if self.opt.att_loss:
+                fake_image = fake_image[0]
 
         fake_out = {'real':real_image,
                     'fake':fake_image,
@@ -420,9 +426,15 @@ class CA2SISModel(torch.nn.Module):
 
         for part in p:
             s_org[:,part] = s_swap[:,part].clone()  
-            
-        fake_image = self.netG.decode(z,s_org)
-        fake_image_sw = self.netG.decode(z,s_swap)
+        
+        if self.opt.att_loss:
+            fake_image = self.netG.decode(z,s_org,m)
+            fake_image_sw = self.netG.decode(z,s_swap,m)        
+            fake_image = fake_image[0]
+            fake_image_sw = fake_image_sw[0]
+        else:
+            fake_image = self.netG.decode(z,s_org)
+            fake_image_sw = self.netG.decode(z,s_swap)
 
         fake_out = {'real':real_image,
                     'fake':fake_image,
