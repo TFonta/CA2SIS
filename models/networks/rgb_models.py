@@ -168,9 +168,12 @@ class RGB_model(nn.Module):
         z = self.encode(m_sw)
         s = self.style_encoder(rgb, m)
         
-        res = self.decode(z,s,m)
-
-        return res # returns rgb, att_loss
+        if self.opt.att_loss:
+            res, att_loss= self.decode(z,s,m)
+            return res, att_loss
+        else:
+            res = self.decode(z,s,m)
+            return res # returns rgb, att_loss
 
 class MultiScaleEffStyleEncoder(nn.Module):
     def __init__(self, input_channels = 3, num_mask_channels = 19, num_downsample = 4, num_upsample = 3, 

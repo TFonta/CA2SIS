@@ -63,6 +63,7 @@ iter_counter = IterationCounter(opt, len(dataloader))
 
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
+    print("learning rate: ", trainer.old_lr, flush = True)
     for i, data_i in enumerate(dataloader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
 
@@ -114,7 +115,8 @@ for epoch in iter_counter.training_epochs():
             trainer.save('latest')
             iter_counter.record_current_iter()
 
-    trainer.update_learning_rate(epoch)
+    if not opt.fixed_lr:
+        trainer.update_learning_rate(epoch)
     iter_counter.record_epoch_end()
 
     if epoch % opt.save_epoch_freq == 0 or \
