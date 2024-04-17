@@ -31,7 +31,7 @@ Link to the pre-processed CelebAMask-HQ dataset: https://drive.google.com/file/d
 
 To run the pre-trained models, please download the related weights and put the files into a 'checkpoints' folder in the root directory:
 
-[[CelebMask-HQ (To be uploaded)](link)]
+[CelebMask-HQ](https://univpr-my.sharepoint.com/:u:/g/personal/claudio_ferrari2_unipr_it/EdK9F-kTxQVHq6RY7eCYEC8BFg78o340_axtRBdgVAIySw?e=b9Qqwg)
 [[Ade20K (To be uploaded)](link)]
 
 To test the pre-trained model run the following commands:
